@@ -1,0 +1,118 @@
+﻿@using System.Text
+@inject MyStateContainer myStateContainer
+@inject AppDbContext MyDbContext
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="admindashboard">DemoCRM</a>
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+<style>
+    .submenu {
+        margin-top: -3px;
+        background-color: #3b506a !important;
+        border-bottom: 1px solid #4f9ed3;
+    }
+</style>
+<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+    <ul class="nav flex-column">
+        @foreach (Menu menu in menuParentList)
+        {
+            subMenu = menuList.Where(x => x.ParentId == Convert.ToInt32(@menu.Id)).OrderBy(x => x.ChildOrder).ToList();
+            foreach (Menu m in subMenu)
+            {
+                if(!string.IsNullOrEmpty(m.PageUrl) && m.PageUrl.IndexOf('/') == 0)
+                    m.PageUrl =  m.PageUrl.Substring(1);
+            }
+            if (menu.ParentId == 0)
+            {
+                <li class="nav-item px-1">
+                    <NavLink class="nav-link" @onclick="()=>GetIsClicked(menu)" >
+                        <span class="@menu.CssClass" aria-hidden="true"></span>@menu.DisplayName
+                    </NavLink>
+                    <ul class="nav flex-column">
+                        @foreach (Menu sbmenuitem in subMenu)
+                        {
+                            if (menu.Id == sbmenuitem.ParentId)
+                            {
+                                if (expandSubMenu && menu.Id == clickedMenu)
+                                {
+                                    <li class="nav-item px-3">
+                                        <NavLink class="nav-link submenu" href="@sbmenuitem.PageUrl" @onclick="()=>GetIsClicked(sbmenuitem)">
+                                            <span class="@sbmenuitem.CssClass" aria-hidden="true"></span>@sbmenuitem.DisplayName
+                                        </NavLink>
+                                    </li>
+                                }
+                            }
+                        }
+                    </ul>
+                </li>
+            }
+        }
+    </ul>
+</div>
+
+@code {
+
+    private bool collapseNavMenu = true;
+    private bool expandSubMenu;
+    private int clickedMenu = 0;
+    private bool hasPageName = true;
+    private int prevClickedMenu = 0;
+    List<Menu> menuList = null;
+    string menuData = string.Empty;
+    List<Menu> menuParentList = new List<Menu>();
+    List<Menu> subMenu;
+    public void GetIsClicked(Menu mn)
+    {
+        clickedMenu = mn.Id;
+        if (prevClickedMenu != clickedMenu)
+        {
+            expandSubMenu = true;
+            if (mn.PageUrl != "" || mn.DisplayName == "Sales Order")
+            {
+                hasPageName = true;
+            }
+            else
+            {
+                expandSubMenu = !expandSubMenu;
+                hasPageName = false;
+            }
+        }
+        else
+        {
+            expandSubMenu = !expandSubMenu;
+        }
+        prevClickedMenu = clickedMenu;
+    }
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        if (hasPageName)
+        {
+            collapseNavMenu = !collapseNavMenu;
+        }
+
+    }
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        string? MenuIds = myStateContainer.User.AssignedMenuId;
+        menuList = MyDbContext.Menu.ToList();
+        if (!string.IsNullOrEmpty(MenuIds))
+        {
+            var ID = MenuIds.Split(',').Select(int.Parse).ToList();
+
+            var displayMenus = from menu in menuList.AsQueryable<Menu>()
+                               where ID.Any(x => menu.Id.Equals(x))
+                               select menu;
+            menuList = displayMenus.ToList();
+        }
+
+        menuParentList = menuList.Where(x => x.ParentId == 0).OrderBy(x => x.ParentOrder).ToList();
+    }
+}

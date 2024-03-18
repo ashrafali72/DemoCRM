@@ -1,0 +1,119 @@
+﻿@page "/"
+@page "/Login"
+@using DemoCRM.Model
+@layout LoginLayout
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@inject AppDbContext MyDbContext
+@inject MyStateContainer myStateContainer
+<head>
+    <title>Login | Bajaj CRM</title>
+    <link href="styles/bajaj_custom.css" rel="stylesheet" />
+    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
+</head>
+<body class="hold-transition login-page">
+    <form id="form1">
+        <div style="width: 100%; height: 50vh;"></div>
+        <div class="col-sm-5 col-md-offset-3 frm">
+            <div class="form-box">
+                <div class="form-top">
+                    <div class="form-top-left">
+                        <h3>Login to Bajaj CRM</h3>
+                        <p>Enter username and password to log on:</p>
+                    </div>
+                    <div class="form-top-right">
+                        <i class="oi oi-account-login"></i>
+                    </div>
+                </div>
+                <div class="form-bottom">
+                   
+                    <div class="form-group">
+                        <input type="text" @bind="Username" placeholder="Username..." class="form-username form-control">
+                    </div>
+                    <br/>
+                    <div class="form-group">
+                        <input type="password" @bind="Password" name="txtPassword" placeholder="Password..." class="form-password form-control" id="txtPassword">
+                    </div>
+
+                    <div class="form-group">
+                        <input type="button" ID="btnLogin" @onclick="ValidateLogin" Class="btn-new" value="Sign In" />
+                    </div>
+
+                    
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <style>
+        .login-box.custom-photo {
+            width: 100%;
+            max-width: 170px;
+        }
+
+            .login-box.custom-photo .login-box-body img {
+                width: 100%;
+                height: auto;
+            }
+
+            .login-box.custom-photo .login-box-body {
+                padding: 10px;
+            }
+
+        .custom-photo h2 {
+            color: #fff;
+            display: block;
+            font-size: 20px;
+            font-weight: 600;
+            margin: 10px 0;
+            padding: 0;
+            text-align: center;
+        }
+    </style>
+</body>
+@code {
+    private string Username = string.Empty;
+    private string Password = string.Empty;
+    protected override void OnInitialized()
+    {
+        this.InvokeAsync(() => this.StateHasChanged());
+        //myStateContainer.OnStateChange += StateHasChanged;
+    }
+
+    private async Task ValidateLogin()
+    {
+        try
+        {
+            if (checkLogin(Username, Password))
+            {
+                NavigationManager.NavigateTo("admindashboard");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Invalid Usename or password! Please try again.");
+                NavigationManager.NavigateTo("/");
+            }
+        }
+        catch (Exception ex)
+        {
+
+            throw;
+        }
+    }
+    private bool checkLogin(string userName, string Password)
+    {
+        List<User> user = MyDbContext.User.Where(x => x.UserName == userName && x.Password == Password && x.IsActive == true).ToList();
+        if (user.Count > 0)
+        {
+            myStateContainer.SetUser(user.First());
+            return true;
+        }
+        else
+            return false;
+    }
+    public void Dispose()
+    {
+        myStateContainer.OnStateChange -= StateHasChanged;
+    }
+}
+

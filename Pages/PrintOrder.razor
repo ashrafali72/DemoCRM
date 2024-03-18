@@ -1,0 +1,173 @@
+﻿@page "/SalesOrder/Print"
+@inject CommonProcess process
+<div class="modal-content">
+    <div class="modal-header">
+        <h4 class="modal-title">Search Order</h4>
+    </div>
+    <div id="divModal" class="modal-body">
+        <br />
+        <div class="form-horizontal">
+            <div class="col-md-12">
+                <div class="row">
+                    <label class="col-md-2 control-label">Brand Name</label>
+                    <div class="col-md-4">
+                        <input Class="form-control" Placeholder="Input First Three Letters of Brand" @bind="BrandName" />
+                        
+                        <span id="Span1"></span>
+                    </div>
+                    <label class="col-sm-2 control-label">Customer Name</label>
+                    <div class="autocomplete col-md-4">
+                        <input Class="form-control" Placeholder="Input First Three Letters of Organization" @bind="selectedCustomerName" @oninput="GetAllParty" />
+                        @if (Parties is not null)
+                        {
+                            <ul class="options">
+                                @if (Parties.Any())
+                                {
+                                    @foreach (var party in Parties)
+                                    {
+                                        <li class="option" @onclick=@(_ => SelectCustomer(Convert.ToString(party.Key)))>
+                                            <span class="option-text">@party.Value</span>
+                                        </li>
+                                    }
+                                }
+                                else
+                                {
+                                    <li class="disabled option">No results</li>
+                                }
+                            </ul>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div>&nbsp;</div>
+            <div>
+                <div class="col-md-12 col-sm-12">
+                    <div class="row">
+                        <label for="inputEmail3" class="col-md-2 control-label">Date From:</label>
+                        <div class="col-md-4">
+                            <input type="text" class="form-control" @bind="FromDate" />
+                        </div>
+                        <label for="inputEmail3" class="col-md-2 control-label">Date To:</label>
+                        <div class="col-md-4">
+                            <input type="text" class="form-control" @bind="ToDate" />
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <div>&nbsp;</div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group text-center">
+                        <input type="button" ID="btnBack" class="btn btn-primary" value="Back To Home" @onclick="btnBack_Click" />
+                        <input type="button" ID="btnSearchOrder" class="btn btn-primary" value="Search Order" @onclick="btnSearchOrder_Click" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div>
+@if (objodr != null && objodr.Count > 0)
+{
+    
+    <div class="page-size-chooser">
+        Items per page:
+        <select @bind="@pagination.ItemsPerPage">
+            <option>5</option>
+            <option>10</option>
+            <option>20</option>
+            <option>50</option>
+            <option value="@pagination.TotalItemCount">All</option>
+        </select>
+    </div>
+    <div class="grid">
+        <QuickGrid Items="@objodr.AsQueryable()" Class="table table-hover table-bordered table-striped" Pagination="@pagination">
+            <PropertyColumn Property="@(p => p.OrderCode)" Sortable="true" />
+            <PropertyColumn Property="@(p => p.BrandName)" Sortable="true" />
+            <PropertyColumn Property="@(p => p.LabelClaim)" />
+            <PropertyColumn Property="@(p => p.Created)" />
+            <PropertyColumn Property="@(p => p.OrderType)" />
+            <PropertyColumn Property="@(p => p.Quantity)" />
+            <PropertyColumn Property="@(p => p.Rate)" />
+            <PropertyColumn Property="@(p => p.MRP)" />
+            <PropertyColumn Property="@(p => p.TabCapType)" />
+            <PropertyColumn Property="@(p => p.TabCapSize)" />
+            <PropertyColumn Property="@(p => p.PackType)" />
+            <PropertyColumn Property="@(p => p.PackSize)" />
+            <PropertyColumn Property="@(p => p.CylinderCharge)" />
+            <PropertyColumn Property="@(p => p.ApprovalCharge)" />
+            <PropertyColumn Property="@(p => p.ItemSecurity)" />
+            <PropertyColumn Property="@(p => p.AcceptedDate)" />
+            <PropertyColumn Property="@(p => p.Comments)" />
+            <PropertyColumn Property="@(p => p.Remarks)" />
+            <PropertyColumn Property="@(p => p.ExpiryMonth)" />
+            <PropertyColumn Property="@(p => p.PreRate)" />
+            <PropertyColumn Property="@(p => p.PreQuantity)" />
+            <PropertyColumn Property="@(p => p.PvcColor)" />
+            <PropertyColumn Property="@(p => p.PaymentType)" />
+            <PropertyColumn Property="@(p => p.AssignTo)" />
+        </QuickGrid>
+    </div>
+    <Paginator State="@pagination" />
+}
+</div>
+@code {
+    PaginationState pagination = new PaginationState { ItemsPerPage = 50 };
+    private string BrandName = string.Empty;
+    private string FromDate = string.Empty;
+    private string ToDate = string.Empty;
+    Dictionary<int,string>? Parties;
+    List<PrintOrderClass> objodr;
+    string? selectedCustomerId;
+    string? selectedCustomerName;
+    string? SearchKey;
+    #region Get all parties maching the search key
+    async Task GetAllParty(ChangeEventArgs e)
+    {
+        SearchKey = e.Value?.ToString();
+        if (SearchKey?.Length > 2)
+        {
+            Parties = await process.GetAllParty(SearchKey);
+        }
+        else
+        {
+            Parties = null;
+            selectedCustomerName = selectedCustomerId = null;
+        }
+    }
+    #endregion
+
+    void SelectCustomer(string id)
+    {
+        selectedCustomerId = id;
+        selectedCustomerName = Parties!.First(c => c.Key.Equals(Convert.ToInt32(selectedCustomerId))).Value;
+        Parties = null;
+    }
+    private void btnBack_Click(MouseEventArgs e)
+    {
+        throw new NotImplementedException();
+    }
+    #region Search Operation
+    private void btnSearchOrder_Click(MouseEventArgs e)
+    {
+        
+        if (!string.IsNullOrEmpty(selectedCustomerName) && string.IsNullOrEmpty(FromDate) && string.IsNullOrEmpty(ToDate))
+        {
+            objodr = process.GetPrintOrder(selectedCustomerName, "customer", "", "");
+        }
+        else if (!string.IsNullOrEmpty(BrandName) && string.IsNullOrEmpty(FromDate) && string.IsNullOrEmpty(ToDate))
+        {
+            objodr = process.GetPrintOrder(BrandName, "brand", "", "");
+        }
+        else if (!string.IsNullOrEmpty(selectedCustomerName) && !string.IsNullOrEmpty(FromDate) && !string.IsNullOrEmpty(ToDate))
+        {
+            objodr = process.GetPrintOrder(BrandName, "customer", FromDate, ToDate);
+        }
+        else if (!string.IsNullOrEmpty(BrandName) && !string.IsNullOrEmpty(FromDate) && !string.IsNullOrEmpty(ToDate))
+        {
+            objodr = process.GetPrintOrder(BrandName, "brand", FromDate, ToDate);
+        }
+    }
+    #endregion
+}

@@ -1,0 +1,60 @@
+﻿@page "/Create Order"
+@page "/Manage Order"
+@page "/Print Order"
+@page "/Search Order"
+@page "/Edit Order"
+@page "/Create/View GTN"
+@page "/Edit GTN"
+@page "/Raw Material Data"
+@page "/Employee"
+@page "/Edit MarketedBy"
+@page "/sub"
+<style>
+    .control_btns a i {
+        height: 38px;
+        width: 38px;
+        background: #ffffff;
+        line-height: 38px;
+        border-radius: 50px;
+        margin-right: 8px;
+        margin-left: -8px;
+        margin-top: 1px;
+    }
+
+    .control_btns a {
+        text-decoration: none;
+        padding: 15px 20px 15px 10px !important;
+        line-height: 40px;
+        height: initial !important;
+        border-radius: 50px;
+        background: #f1f1f1;
+        transition: all .2s;
+    }
+
+        .control_btns a:hover {
+            color: #fff;
+            background: #2a8bcb;
+        }
+
+            .control_btns a:hover i {
+                color: #666666;
+            }
+</style>
+<div class="box-header control_btns" style="background: #fff;">
+    <div id="divOrderType" class="text-center ">
+        <a ID="lnlNewOrder" @onclick="lnlNewOrder_Click" href="/sub" CssClass="btn btn-app"> <i class="fa fa-plus"></i>NEW ORDER</a>
+        <a ID="lnlRepeatOrder" @onclick="lnlRepeatOrder_Click" href="/sub" CssClass="btn btn-app"> <i class="fa fa-refresh"></i>REPEAT ORDER</a>
+    </div>
+</div>
+
+
+@code{
+
+    private void lnlNewOrder_Click(){
+
+    }
+    private void lnlRepeatOrder_Click()
+    {
+
+    }
+}
