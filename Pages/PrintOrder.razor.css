@@ -32,6 +32,7 @@
         .autocomplete .option:hover {
             background: #1E90FF;
             color: #fff;
+            cursor:pointer;
         }
 
         .autocomplete .option.disabled {

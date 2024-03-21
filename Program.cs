@@ -1,4 +1,4 @@
-using Business;
+using DemoCRM.Business;
 using DemoCRM.Model;
 using DemoCRM.Shared;
 using Microsoft.AspNetCore.Components;

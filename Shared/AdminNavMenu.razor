@@ -1,5 +1,5 @@
 ﻿@using System.Text
-@inject MyStateContainer myStateContainer
+@inject MyStateContainer? myStateContainer
 @inject AppDbContext MyDbContext
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
@@ -20,7 +20,7 @@
     <ul class="nav flex-column">
         @foreach (Menu menu in menuParentList)
         {
-            subMenu = menuList.Where(x => x.ParentId == Convert.ToInt32(@menu.Id)).OrderBy(x => x.ChildOrder).ToList();
+            subMenu = menuList!.Where(x => x.ParentId == Convert.ToInt32(@menu.Id)).OrderBy(x => x.ChildOrder).ToList();
             foreach (Menu m in subMenu)
             {
                 if(!string.IsNullOrEmpty(m.PageUrl) && m.PageUrl.IndexOf('/') == 0)
@@ -61,10 +61,10 @@
     private int clickedMenu = 0;
     private bool hasPageName = true;
     private int prevClickedMenu = 0;
-    List<Menu> menuList = null;
+    List<Menu>? menuList = null;
     string menuData = string.Empty;
     List<Menu> menuParentList = new List<Menu>();
-    List<Menu> subMenu;
+    List<Menu>? subMenu;
     public void GetIsClicked(Menu mn)
     {
         clickedMenu = mn.Id;
@@ -101,6 +101,7 @@
     protected override void OnInitialized()
     {
         base.OnInitialized();
+        #nullable enable
         string? MenuIds = myStateContainer.User.AssignedMenuId;
         menuList = MyDbContext.Menu.ToList();
         if (!string.IsNullOrEmpty(MenuIds))

@@ -1,5 +1,6 @@
 ﻿@page "/SalesOrder/Print"
 @inject CommonProcess process
+@inject NavigationManager NavManager
 <div class="modal-content">
     <div class="modal-header">
         <h4 class="modal-title">Search Order</h4>
@@ -10,9 +11,26 @@
             <div class="col-md-12">
                 <div class="row">
                     <label class="col-md-2 control-label">Brand Name</label>
-                    <div class="col-md-4">
-                        <input Class="form-control" Placeholder="Input First Three Letters of Brand" @bind="BrandName" />
-                        
+                    <div class="autocomplete col-md-4">
+                        <input Class="form-control" Placeholder="Input First Three Letters of Brand" @bind="selectedBrandName" @oninput="GetAllBrand" />
+                        @if (Brands is not null)
+                        {
+                            <ul class="options">
+                                @if (Brands.Any())
+                                {
+                                    @foreach (var brand in Brands)
+                                    {
+                                        <li class="option" @onclick=@(_ => SelectBrands(Convert.ToString(brand.Key)))>
+                                            <span class="option-text">@brand.Value</span>
+                                        </li>
+                                    }
+                                }
+                                else
+                                {
+                                    <li class="disabled option">No results</li>
+                                }
+                            </ul>
+                        }
                         <span id="Span1"></span>
                     </div>
                     <label class="col-sm-2 control-label">Customer Name</label>
@@ -83,6 +101,7 @@
     </div>
     <div class="grid">
         <QuickGrid Items="@objodr.AsQueryable()" Class="table table-hover table-bordered table-striped" Pagination="@pagination">
+            <PropertyColumn Property="@(p => p.Id)" Sortable="true" />
             <PropertyColumn Property="@(p => p.OrderCode)" Sortable="true" />
             <PropertyColumn Property="@(p => p.BrandName)" Sortable="true" />
             <PropertyColumn Property="@(p => p.LabelClaim)" />
@@ -118,9 +137,12 @@
     private string FromDate = string.Empty;
     private string ToDate = string.Empty;
     Dictionary<int,string>? Parties;
-    List<PrintOrderClass> objodr;
+    Dictionary<int, string>? Brands;
+    List<PrintOrderClass>? objodr;
     string? selectedCustomerId;
     string? selectedCustomerName;
+    string? selectedBrandId;
+    string? selectedBrandName;
     string? SearchKey;
     #region Get all parties maching the search key
     async Task GetAllParty(ChangeEventArgs e)
@@ -138,16 +160,41 @@
     }
     #endregion
 
+    #region Get all Brands maching the search key
+    async Task GetAllBrand(ChangeEventArgs e)
+    {
+        SearchKey = e.Value?.ToString();
+        if (SearchKey?.Length > 2)
+        {
+            Brands = await process.GetAllBrand(SearchKey);
+        }
+        else
+        {
+            Brands = null;
+            selectedBrandName = selectedBrandId = null;
+        }
+    }
+    #endregion
+
     void SelectCustomer(string id)
     {
         selectedCustomerId = id;
         selectedCustomerName = Parties!.First(c => c.Key.Equals(Convert.ToInt32(selectedCustomerId))).Value;
         Parties = null;
     }
+
+    void SelectBrands(string id)
+    {
+        selectedBrandId = id;
+        selectedBrandName = Brands!.First(c => c.Key.Equals(Convert.ToInt32(selectedBrandId))).Value;
+        Brands = null;
+    }
+
     private void btnBack_Click(MouseEventArgs e)
     {
-        throw new NotImplementedException();
+        NavManager.NavigateTo("admindashboard");
     }
+
     #region Search Operation
     private void btnSearchOrder_Click(MouseEventArgs e)
     {
@@ -156,17 +203,17 @@
         {
             objodr = process.GetPrintOrder(selectedCustomerName, "customer", "", "");
         }
-        else if (!string.IsNullOrEmpty(BrandName) && string.IsNullOrEmpty(FromDate) && string.IsNullOrEmpty(ToDate))
+        else if (!string.IsNullOrEmpty(selectedBrandName) && string.IsNullOrEmpty(FromDate) && string.IsNullOrEmpty(ToDate))
         {
-            objodr = process.GetPrintOrder(BrandName, "brand", "", "");
+            objodr = process.GetPrintOrder(selectedBrandName, "brand", "", "");
         }
         else if (!string.IsNullOrEmpty(selectedCustomerName) && !string.IsNullOrEmpty(FromDate) && !string.IsNullOrEmpty(ToDate))
         {
-            objodr = process.GetPrintOrder(BrandName, "customer", FromDate, ToDate);
+            objodr = process.GetPrintOrder(selectedCustomerName, "customer", FromDate, ToDate);
         }
-        else if (!string.IsNullOrEmpty(BrandName) && !string.IsNullOrEmpty(FromDate) && !string.IsNullOrEmpty(ToDate))
+        else if (!string.IsNullOrEmpty(selectedBrandName) && !string.IsNullOrEmpty(FromDate) && !string.IsNullOrEmpty(ToDate))
         {
-            objodr = process.GetPrintOrder(BrandName, "brand", FromDate, ToDate);
+            objodr = process.GetPrintOrder(selectedBrandName, "brand", FromDate, ToDate);
         }
     }
     #endregion
